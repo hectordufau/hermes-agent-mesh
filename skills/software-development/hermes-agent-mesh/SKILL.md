@@ -115,6 +115,7 @@ before adding a 3rd untrusted host.
 - mcp SDK must be **1.x** (`@app.list_tools()` decorator API). 2.x changed the API.
 - Configure MCP servers via `hermes config set mcp_servers...` rather than editing files by hand.
 - The OpenCode limit monitor is **local per host**; the orchestrator does NOT watch the remote opencode — each host watches its own.
+- Remote VMs on the Acer live in libvirt `qemu:///system` (not the default `qemu:///session`); real domain names are `win11`, `macOS`, `SAPABAP` — see `references/broker.md`.
 
 ## Files in this skill
 

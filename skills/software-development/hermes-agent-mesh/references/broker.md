@@ -40,3 +40,25 @@ python3 -c "import zmq; sp,ss=zmq.curve_keypair(); cp,cs=zmq.curve_keypair(); pr
 Hardening: to accept only known hosts, add `zmq.auth` — an `AuthenticationThread`
 with `configure_curve(domain, certs_dir)` — before going multi-host on an
 untrusted network.
+
+## Remote host notes (Acer reference deployment)
+
+The mesh runs arbitrary commands on the connected host — that is its purpose.
+Observations from the Acer box:
+
+- **QEMU/KVM via libvirt**: the user's default `virsh` points at
+  `qemu:///session` (empty). Real VMs live in `qemu:///system`. Always use the
+  explicit URI:
+  ```bash
+  virsh -c qemu:///system list --all          # enumerate
+  virsh -c qemu:///system start <name>        # boot a VM
+  ```
+  The `hector` user can drive `qemu:///system` (passwordless sudo `virsh`
+  confirmed). The actual domain names are **`win11`**, `macOS`, `SAPABAP`
+  (NOT `windows11` — that name does not exist and `virsh start windows11`
+  fails with "failed to get domain").
+- **multipass** VMs (edi, gold, matriz, mgv, sic) run alongside and are started
+  with `multipass start --all` / listed with `multipass list`.
+
+The worker echoes raw shell output (prompt + ANSI escapes). Parse the body, not
+the decoration, when reading `out`.
