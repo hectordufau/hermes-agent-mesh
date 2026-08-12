@@ -1,0 +1,10 @@
+{
+  "skills": [
+    {
+      "name": "hermes-agent-mesh",
+      "path": "skills/software-development/hermes-agent-mesh",
+      "description": "Multi-host Hermes orchestration over ZeroMQ (CURVE) with local per-host OpenCode limit monitor.",
+      "version": "1.0.0"
+    }
+  ]
+}
