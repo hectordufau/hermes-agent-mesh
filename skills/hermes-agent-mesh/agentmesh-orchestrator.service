@@ -1,0 +1,15 @@
+[Unit]
+Description=Hermes Agent Mesh - Orchestrator bridge (ZeroMQ producer to remote host)
+After=network-online.target hermes-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.hermes/agentmesh-dist
+ExecStart=%h/.hermes/agentmesh-dist/venv/bin/python %h/.hermes/agentmesh-dist/agentmesh_bridge.py
+Environment=AGENTMESH_TARGET=tcp://192.168.0.150:5555
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
