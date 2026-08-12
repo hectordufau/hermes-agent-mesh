@@ -6,12 +6,13 @@ It is intentionally separate from the main skill body.
 ## Dispatcher bind (all interfaces)
 
 The remote dispatcher must accept connections from other hosts on the LAN, so
-it binds on every interface instead of loopback. In `acer_dispatcher.py`:
+it binds on every interface instead of loopback. In `acer_dispatcher.py` use the
+ZMQ wildcard host (`*` means all interfaces):
 
 ```python
-FRONTEND = "tcp://0.0.0.0:5555"   # tasks (producers)
-BACKEND  = "tcp://0.0.0.0:5556"   # workers (DEALER)
-CONTROL  = "tcp://0.0.0.0:5557"   # user decisions
+FRONTEND = "tcp://*:5555"   # tasks (producers)
+BACKEND  = "tcp://*:5556"   # workers (DEALER)
+CONTROL  = "tcp://*:5557"   # user decisions
 ```
 
 Producers connect with a DEALER socket at `tcp://<remote-ip>:5555`.

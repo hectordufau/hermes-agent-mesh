@@ -63,7 +63,7 @@ auto-switches state.
 ```bash
 # deps
 python3 -m venv ~/.hermes/agentmesh-dist/venv
-~/.hermes/agentmesh-dist/venv/bin/pip install mcp pyzmq
+~/.hermes/agentmesh-dist/venv/bin/pip install mcp==1.9.4 pyzmq==27.1.0
 # files live in ~/.hermes/agentmesh-dist/: agentmesh_send.py, agentmesh_mcp.py,
 #        agentmesh_bridge.py, install.sh
 # register MCP (Hermes spawns it on startup):
