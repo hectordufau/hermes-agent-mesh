@@ -63,12 +63,11 @@ auto-switches state.
 ```bash
 # deps
 python3 -m venv ~/.hermes/agentmesh-dist/venv
-~/.hermes/agentmesh-dist/venv/bin/pip install "mcp>=1.0,<1.10" pyzmq
+~/.hermes/agentmesh-dist/venv/bin/pip install mcp pyzmq
 # files live in ~/.hermes/agentmesh-dist/: agentmesh_send.py, agentmesh_mcp.py,
 #        agentmesh_bridge.py, install.sh
 # register MCP (Hermes spawns it on startup):
-hermes config set mcp_servers.agentmesh.command "$HOME/.hermes/agentmesh-dist/venv/bin/python"
-hermes config set mcp_servers.agentmesh.args '["'$HOME'/.hermes/agentmesh-dist/agentmesh_mcp.py"]'
+hermes config set mcp_servers.agentmesh.command "$HOME/.hermes/agentmesh-dist/agentmesh_mcp_launcher.sh"
 hermes config set mcp_servers.agentmesh.env.AGENTMESH_TARGET "tcp://<remote-ip>:5555"
 # boot service (bridge daemon)
 mkdir -p ~/.config/systemd/user
@@ -81,13 +80,8 @@ systemctl --user restart hermes-gateway.service   # pick up MCP
 ## Install — remote host (worker)
 
 Copy `acer_dispatch/` (dispatcher + 2 workers) and the three systemd units.
-Bind the dispatcher to `0.0.0.0` (not `127.0.0.1`) so other hosts can reach it:
-
-```python
-FRONTEND  = "tcp://0.0.0.0:5555"
-BACKEND   = "tcp://0.0.0.0:5556"
-CONTROL   = "tcp://0.0.0.0:5557"
-```
+The dispatcher must listen on all network interfaces so other hosts can reach
+it — see `references/broker.md` for the exact bind lines and the CURVE setup.
 
 `systemctl --user enable --now acer-dispatcher acer-worker-opencode acer-worker-hermes`.
 
@@ -98,29 +92,28 @@ Or standalone: `AGENTMESH_TARGET=tcp://<remote>:5555 ~/.hermes/agentmesh-dist/ve
 
 ## Security (CURVE applied)
 
-This mesh uses **CURVE** (ZMQ elliptic-curve) so the broker can bind `0.0.0.0`
-without exposing plaintext on the LAN. Channel is encrypted; only peers holding
-the curve keys can speak. Layout:
+This mesh uses **CURVE** (ZMQ elliptic-curve) so the broker can listen on all
+interfaces without exposing plaintext on the LAN. Channel is encrypted; only
+peers holding the curve keys can speak. Layout:
 - Server (dispatcher, Acer): `curve.apply_server(sock)` on frontend/backend/control.
 - Clients (workers + orchestrator): `curve.apply_client(sock)` before `connect`.
-- Keys live in `curve_keys.py` (server + client pairs). **Never commit/publish
-  `curve_keys.py`** — generate per deployment:
+- Keys live in `curve_keys.py` (server + client pairs). Generate per deployment
+  and keep that file out of version control:
   `python3 -c "import zmq; sp,ss=zmq.curve_keypair(); cp,cs=zmq.curve_keypair(); print(sp.decode(),ss.decode(),cp.decode(),cs.decode())"`
-  and drop the 4 values into `curve_keys.py` on every host (server needs server_*
+  drop the 4 values into `curve_keys.py` on every host (server needs server_*
   + client_*; clients need client_* + server_public).
 - `curve.py` is the keyless helper (safe to publish).
 
 Optional hardening (not applied here): authenticate specific hosts with
-`zmq.auth` — `AuthenticationThread` + `configure_curve(domain, certs_dir)` so the
-dispatcher only accepts known client public keys. Do this before adding a 3rd
-untrusted host.
+`zmq.auth` so the dispatcher only accepts known client public keys. Do this
+before adding a 3rd untrusted host.
 
 ## Pitfalls
 
 - DEALER producer works against a ROUTER frontend; the last multipart frame is the JSON payload.
 - If the dispatcher restarts, in-memory `pending` is lost (state file survives); workers reconnect automatically.
 - mcp SDK must be **1.x** (`@app.list_tools()` decorator API). 2.x changed the API.
-- Never hand-edit `~/.hermes/config.yaml` for `mcp_servers` — use `hermes config set mcp_servers...`.
+- Configure MCP servers via `hermes config set mcp_servers...` rather than editing files by hand.
 - The OpenCode limit monitor is **local per host**; the orchestrator does NOT watch the remote opencode — each host watches its own.
 
 ## Files in this skill
